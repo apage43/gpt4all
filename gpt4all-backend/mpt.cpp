@@ -870,7 +870,6 @@ void MPT::prompt(const std::string &prompt,
     while (i < embd_inp.size()) {
         size_t batch_end = std::min(i + promptCtx.n_batch, embd_inp.size());
         std::vector<int> batch(embd_inp.begin() + i, embd_inp.begin() + batch_end);
-
         // Check if the context has run out...
         if (promptCtx.n_past + batch.size() > promptCtx.n_ctx) {
             const int32_t erasePoint = promptCtx.n_ctx * promptCtx.contextErase;
@@ -912,15 +911,15 @@ void MPT::prompt(const std::string &prompt,
     // predict next tokens
     int32_t totalPredictions = 0;
     for (int i = 0; i < promptCtx.n_predict; i++) {
-
         // sample next token
         const int n_vocab = d_ptr->model->hparams.n_vocab;
         int id = 0;
         {
             const int64_t t_start_sample_us = ggml_time_us();
+            const size_t n_prev_toks = std::min((size_t) promptCtx.repeat_last_n, promptCtx.tokens.size());
             id = gpt_sample_top_k_top_p(d_ptr->vocab, n_vocab,
-                promptCtx.tokens.data() + promptCtx.n_ctx - promptCtx.n_ctx,
-                promptCtx.n_ctx,
+                promptCtx.tokens.data() + promptCtx.tokens.size() - n_prev_toks,
+                n_prev_toks,
                 promptCtx.logits,
                 promptCtx.top_k, promptCtx.top_p, promptCtx.temp,
                 promptCtx.repeat_penalty,
