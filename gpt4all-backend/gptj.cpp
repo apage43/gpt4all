@@ -7,6 +7,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <filesystem>
 #include <fstream>
 #include <map>
 #include <string>
@@ -859,6 +860,9 @@ bool GPTJ::loadModel(const std::string &modelPath) {
 
     d_ptr->n_threads = std::min(4, (int32_t) std::thread::hardware_concurrency());
     d_ptr->modelLoaded = true;
+    auto vocpath = std::filesystem::path(modelPath).parent_path();
+    vocpath.append("gpt-j.json");
+    load_bpecpp_tokenizer(vocpath.string(), m_bpe, m_tokav);
     fflush(stdout);
     return true;
 }
@@ -914,7 +918,7 @@ void GPTJ::prompt(const std::string &prompt,
     int64_t t_prompt_us = 0;
 
     // tokenize the prompt
-    std::vector<gpt_vocab::id> embd_inp = ::gpt_tokenize(d_ptr->vocab, prompt);
+    std::vector<uint32_t> embd_inp = m_tokav->encode(prompt, *m_bpe);
 
     // save the context size
     promptCtx.n_ctx = d_ptr->model->hparams.n_ctx;

@@ -7,6 +7,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <filesystem>
 #include <fstream>
 #include <map>
 #include <random>
@@ -785,6 +786,14 @@ bool MPT::loadModel(const std::string &modelPath) {
     d_ptr->modelLoaded = true;
     d_ptr->has_im_end = d_ptr->vocab.token_to_id.find("<|im_end|>") != d_ptr->vocab.token_to_id.end();
     fflush(stdout);
+
+    auto vocpath = std::filesystem::path(modelPath).parent_path();
+    if (modelPath.find("-chat") != std::string::npos) {
+        vocpath.append("mpt-7b-chat.json");
+    } else {
+        vocpath.append("mpt-7b.json");
+    }
+    load_bpecpp_tokenizer(vocpath.string(), m_bpe, m_tokav);
     return true;
 }
 
@@ -839,7 +848,7 @@ void MPT::prompt(const std::string &prompt,
     int64_t t_prompt_us = 0;
 
     // tokenize the prompt
-    std::vector<int> embd_inp = gpt_tokenize(d_ptr->vocab, prompt);
+    std::vector<uint32_t> embd_inp = m_tokav->encode(prompt, *m_bpe);
 
     // save the context size
     promptCtx.n_ctx = d_ptr->model->hparams.n_ctx;
