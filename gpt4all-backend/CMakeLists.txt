@@ -33,6 +33,7 @@ if (GPT4ALL_AVX_ONLY)
     set(LLAMA_FMA  OFF CACHE BOOL "llama: enable FMA" FORCE)
 endif()
 
+find_package(ICU REQUIRED COMPONENTS uc i18n)
 add_subdirectory(llama.cpp)
 
 add_library(llmodel
@@ -40,12 +41,13 @@ add_library(llmodel
     llamamodel.h llamamodel.cpp
     llama.cpp/examples/common.cpp
     llmodel.h llmodel_c.h llmodel_c.cpp
-    mpt.h mpt.cpp
+    mpt.h mpt.cpp bpe.cpp bpe.h json.h
     utils.h utils.cpp
 )
 
 target_link_libraries(llmodel
-    PRIVATE llama)
+    PRIVATE llama
+    PUBLIC ICU::uc ICU::i18n)
 
 set_target_properties(llmodel PROPERTIES
                               VERSION ${PROJECT_VERSION}
