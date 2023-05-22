@@ -7,7 +7,7 @@
 #include <vector>
 #include <random>
 #include <thread>
-#include "bpe.h"
+#include "tokenizer/bpe.h"
 
 //
 // CLI argument parsing
@@ -71,6 +71,8 @@ gpt_vocab::id gpt_sample_top_k_top_p(
         float repeat_penalty,
         std::mt19937 & rng);
 
-void load_bpecpp_tokenizer(const std::string &filename,
-                           std::unique_ptr<bpecpp::BPE>& bpe,
-                           std::unique_ptr<bpecpp::AdditionalVocabAdapter>& av);
+enum TokenizerType {
+    MPT, MPT_CHAT, GPTJ 
+};
+
+void get_bpecpp_tokenizer(const TokenizerType ttype, std::unique_ptr<bpecpp::BPE>& bpe, std::unique_ptr<bpecpp::AdditionalVocabAdapter>& av);

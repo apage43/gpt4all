@@ -5,7 +5,7 @@
 #include <functional>
 #include <vector>
 #include "llmodel.h"
-#include "bpe.h"
+#include "tokenizer/bpe.h"
 
 class MPTPrivate;
 class MPT : public LLModel {

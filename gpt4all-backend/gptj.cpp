@@ -860,10 +860,9 @@ bool GPTJ::loadModel(const std::string &modelPath) {
 
     d_ptr->n_threads = std::min(4, (int32_t) std::thread::hardware_concurrency());
     d_ptr->modelLoaded = true;
-    auto vocpath = std::filesystem::path(modelPath).parent_path();
-    vocpath.append("gpt-j.json");
-    load_bpecpp_tokenizer(vocpath.string(), m_bpe, m_tokav);
     fflush(stdout);
+    
+    get_bpecpp_tokenizer(TokenizerType::GPTJ, m_bpe, m_tokav);
     return true;
 }
 

@@ -5,7 +5,7 @@
 #include <functional>
 #include <vector>
 #include "llmodel.h"
-#include "bpe.h"
+#include "tokenizer/bpe.h"
 
 class GPTJPrivate;
 class GPTJ : public LLModel {

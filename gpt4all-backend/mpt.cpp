@@ -787,13 +787,11 @@ bool MPT::loadModel(const std::string &modelPath) {
     d_ptr->has_im_end = d_ptr->vocab.token_to_id.find("<|im_end|>") != d_ptr->vocab.token_to_id.end();
     fflush(stdout);
 
-    auto vocpath = std::filesystem::path(modelPath).parent_path();
     if (modelPath.find("-chat") != std::string::npos) {
-        vocpath.append("mpt-7b-chat.json");
+        get_bpecpp_tokenizer(TokenizerType::MPT_CHAT, m_bpe, m_tokav);
     } else {
-        vocpath.append("mpt-7b.json");
+        get_bpecpp_tokenizer(TokenizerType::MPT, m_bpe, m_tokav);
     }
-    load_bpecpp_tokenizer(vocpath.string(), m_bpe, m_tokav);
     return true;
 }
 

@@ -41,7 +41,8 @@ add_library(llmodel
     llamamodel.h llamamodel.cpp
     llama.cpp/examples/common.cpp
     llmodel.h llmodel_c.h llmodel_c.cpp
-    mpt.h mpt.cpp bpe.cpp bpe.h json.h
+    mpt.h mpt.cpp tokenizer/bpe.cpp tokenizer/bpe.h
+    tokenizer/mpt_tokenizer_config.h tokenizer/gptj_tokenizer_config.h
     utils.h utils.cpp
 )
 

@@ -1,25 +1,46 @@
 #include "utils.h"
 #include "json.h"
-#include "bpe.h"
+#include "tokenizer/bpe.h"
+#include "tokenizer/mpt_tokenizer_config.h"
+#include "tokenizer/gptj_tokenizer_config.h"
 
 #include <fstream>
 #include <regex>
+#include <stdexcept>
 
+void get_bpecpp_tokenizer(const TokenizerType ttype, std::unique_ptr<bpecpp::BPE>& bpe, std::unique_ptr<bpecpp::AdditionalVocabAdapter>& av) {
+    std::vector<bpecpp::additional_vocab_item> avis;
+    std::unordered_map<std::string, uint32_t> vocab;
+    std::vector<std::string> merges;
 
-void load_bpecpp_tokenizer(const std::string &filename, std::unique_ptr<bpecpp::BPE>& bpe, std::unique_ptr<bpecpp::AdditionalVocabAdapter>& av) {
-    using json = nlohmann::json;
-    std::ifstream inf(filename);
-    json tokenizer_config = json::parse(inf);
-
-    std::vector<bpecpp::additional_vocab_item> added_vocab;
-    for (auto javi : tokenizer_config.at("added_tokens")) {
-        added_vocab.push_back({.id = javi.at("id"),
-                               .content = javi.at("content"),
-                               .special = javi.at("special")});
+    uint32_t tok_id = 0;
+    switch (ttype) {
+        case TokenizerType::MPT_CHAT:
+            avis.push_back({ .id = 50277, .content = "<|im_start|>", .special = true });
+            avis.push_back({ .id = 50278, .content = "<|im_end|>", .special = true });
+        case TokenizerType::MPT:
+            avis.insert(avis.end(), mpt_additional_vocab.begin(), mpt_additional_vocab.end());
+            for (const char* cchar: mpt_vocab) {
+                vocab.insert({std::string(cchar, std::strlen(cchar)), tok_id++ });
+            }
+            for (const char* cchar: mpt_merges) {
+                merges.push_back(std::string(cchar, std::strlen(cchar))); 
+            }
+        break;
+        case TokenizerType::GPTJ:
+            avis.insert(avis.end(), gptj_additional_vocab.begin(), gptj_additional_vocab.end());
+            for (const char* cchar: gptj_vocab) {
+                vocab.insert({std::string(cchar, std::strlen(cchar)), tok_id++ }); 
+            }
+            for (const char* cchar: gptj_merges) {
+                merges.push_back(std::string(cchar, std::strlen(cchar)));
+            }
+        break;
+        default:
+            throw std::invalid_argument("invalid tokenizer type");
     }
-    av = std::make_unique<bpecpp::AdditionalVocabAdapter>(added_vocab);
-    json bpeconfig = tokenizer_config.at("model");
-    bpe = std::make_unique<bpecpp::BPE>(bpeconfig.at("vocab"), bpeconfig.at("merges"));
+    av = std::make_unique<bpecpp::AdditionalVocabAdapter>(avis);
+    bpe = std::make_unique<bpecpp::BPE>(vocab, merges);
 }
 
 gpt_vocab::id gpt_sample_top_k_top_p(
