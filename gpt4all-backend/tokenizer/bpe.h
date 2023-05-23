@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include <string_view>
 
 namespace bpecpp {
 typedef std::pair<icu::UnicodeString, icu::UnicodeString> UnicodeBigram;
@@ -55,8 +56,8 @@ struct icu_hash {
 
 class BPE {
    public:
-    BPE(std::unordered_map<std::string, uint32_t> vocab,
-        std::vector<std::string> merges);
+    BPE(std::unordered_map<std::string_view, uint32_t> vocab,
+        std::vector<std::pair<std::string_view, std::string_view>> merges);
 
     std::vector<uint32_t> encode(const std::string& input);
 
@@ -76,12 +77,29 @@ class BPE {
     std::vector<icu::UnicodeString> pretokenize(const std::string& input);
 };
 
+// for embedding tokenizer configs in the library - had initially constructed
+// `string_view`s in the generated headers, *but* generating thousands actual
+// references into the buffer generates thousands of *relocations* and makes
+// compilation rather slow, delaying resolving the real address into a
+// string_view until runtime fixes that
+struct buf_ref {
+    off_t offset;
+    size_t length;
+
+    std::string_view into(const char* buf) {
+        return std::string_view(buf + offset, length);
+    }
+};
+struct additional_vocab_item_embedded {
+    uint32_t id;
+    buf_ref content;
+    bool special;
+};
 struct additional_vocab_item {
     uint32_t id;
-    std::string content;
+    std::string_view content;
     bool special = false;
 };
-
 class AdditionalVocabAdapter {
    public:
     AdditionalVocabAdapter(std::vector<additional_vocab_item> vocab);
@@ -95,8 +113,8 @@ class AdditionalVocabAdapter {
 
    private:
     std::vector<additional_vocab_item> m_addvocab;
-    std::unordered_map<std::string, uint32_t> m_token_to_id;
-    std::unordered_map<uint32_t, std::string> m_id_to_token;
+    std::unordered_map<std::string_view, uint32_t> m_token_to_id;
+    std::unordered_map<uint32_t, std::string_view> m_id_to_token;
     std::unordered_set<uint32_t> m_special_ids;
     std::regex m_addedtoken_re;
 };

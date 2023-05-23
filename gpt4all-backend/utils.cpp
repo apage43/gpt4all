@@ -10,30 +10,34 @@
 
 void get_bpecpp_tokenizer(const TokenizerType ttype, std::unique_ptr<bpecpp::BPE>& bpe, std::unique_ptr<bpecpp::AdditionalVocabAdapter>& av) {
     std::vector<bpecpp::additional_vocab_item> avis;
-    std::unordered_map<std::string, uint32_t> vocab;
-    std::vector<std::string> merges;
+    std::unordered_map<std::string_view, uint32_t> vocab;
+    std::vector<std::pair<std::string_view, std::string_view>> merges;
 
     uint32_t tok_id = 0;
     switch (ttype) {
         case TokenizerType::MPT_CHAT:
-            avis.push_back({ .id = 50277, .content = "<|im_start|>", .special = true });
-            avis.push_back({ .id = 50278, .content = "<|im_end|>", .special = true });
+            avis.push_back({ .id = 50277, .content = std::string_view("<|im_start|>"), .special = true });
+            avis.push_back({ .id = 50278, .content = std::string_view("<|im_end|>"), .special = true });
         case TokenizerType::MPT:
-            avis.insert(avis.end(), mpt_additional_vocab.begin(), mpt_additional_vocab.end());
-            for (const char* cchar: mpt_vocab) {
-                vocab.insert({std::string(cchar, std::strlen(cchar)), tok_id++ });
+            for (auto avi_e: mpt_additional_vocab) {
+                avis.push_back({avi_e.id, avi_e.content.into(mpt_buffer), avi_e.special});
             }
-            for (const char* cchar: mpt_merges) {
-                merges.push_back(std::string(cchar, std::strlen(cchar))); 
+            for (auto merge: mpt_merges) {
+                merges.push_back({merge.first.into(mpt_buffer), merge.second.into(mpt_buffer)});
+            }
+            for (auto bufref: mpt_vocab) {
+                vocab.insert({bufref.into(mpt_buffer), tok_id++});
             }
         break;
         case TokenizerType::GPTJ:
-            avis.insert(avis.end(), gptj_additional_vocab.begin(), gptj_additional_vocab.end());
-            for (const char* cchar: gptj_vocab) {
-                vocab.insert({std::string(cchar, std::strlen(cchar)), tok_id++ }); 
+            for (auto avi_e: gptj_additional_vocab) {
+                avis.push_back({avi_e.id, avi_e.content.into(gptj_buffer), avi_e.special});
             }
-            for (const char* cchar: gptj_merges) {
-                merges.push_back(std::string(cchar, std::strlen(cchar)));
+            for (auto merge: gptj_merges) {
+                merges.push_back({merge.first.into(gptj_buffer), merge.second.into(gptj_buffer)});
+            }
+            for (auto bufref: gptj_vocab) {
+                vocab.insert({bufref.into(gptj_buffer), tok_id++});
             }
         break;
         default:

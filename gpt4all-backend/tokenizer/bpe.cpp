@@ -22,8 +22,8 @@ static void get_bigrams(const std::vector<icu::UnicodeString>& input,
     }
 }
 
-BPE::BPE(std::unordered_map<std::string, uint32_t> vocab,
-         std::vector<std::string> merges) {
+BPE::BPE(std::unordered_map<std::string_view, uint32_t> vocab,
+         std::vector<std::pair<std::string_view, std::string_view>> merges) {
     for (auto pair : vocab) {
         icu::UnicodeString encd = icu::UnicodeString::fromUTF8(pair.first);
         m_vocab[encd] = pair.second;
@@ -31,10 +31,8 @@ BPE::BPE(std::unordered_map<std::string, uint32_t> vocab,
     }
     size_t n = 0;
     for (auto merge : merges) {
-        std::string s_merge = merge;
-        auto spaceidx = s_merge.find(" ");
-        auto left = icu::UnicodeString::fromUTF8(s_merge.substr(0, spaceidx));
-        auto right = icu::UnicodeString::fromUTF8(s_merge.substr(spaceidx + 1));
+        auto left = icu::UnicodeString::fromUTF8(merge.first);
+        auto right = icu::UnicodeString::fromUTF8(merge.second);
         m_merges[{left, right}] = n++;
     }
 }
@@ -173,14 +171,15 @@ std::vector<icu::UnicodeString> BPE::pretokenize(const std::string& input) {
     return pretoks;
 }
 
-static std::string regex_escape(const std::string& s) {
+static std::string regex_escape(const std::string_view inp) {
+    std::string s(inp);
     static const std::regex metacharacters(R"([\.\^\$\-\+\(\)\[\]\{\}\|\?\*])");
     return std::regex_replace(s, metacharacters, "\\$&");
 }
 
 AdditionalVocabAdapter::AdditionalVocabAdapter(
     std::vector<additional_vocab_item> vocab) {
-    m_addvocab = vocab;
+    m_addvocab.swap(vocab);
     std::string addedtoken_regex;
     for (const additional_vocab_item& item : vocab) {
         if (!addedtoken_regex.empty()) {
