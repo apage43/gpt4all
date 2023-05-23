@@ -9,7 +9,7 @@
 #include <iostream>
 
 namespace bpecpp {
-const std::string BPE_PRETOK_REGEX =
+const std::string_view BPE_PRETOK_REGEX =
     R"('s|'t|'re|'ve|'m|'ll|'d| ?[[:alpha:]]+| ?[[:digit:]]+| ?[^\s[:alpha:][:digit:]]+|\s+(?!\S)|\s+)";
 
 static void get_bigrams(const std::vector<icu::UnicodeString>& input,
@@ -42,11 +42,11 @@ std::vector<uint32_t> BPE::encode(const std::string& input) {
     auto normalized = normalize_nfc(input);
     auto pretokenized = pretokenize(normalized);
     std::vector<icu::UnicodeString> tokens_merged;
-    for (auto ptok : pretokenized) {
+    for (auto &ptok : pretokenized) {
         bpe(ptok, tokens_merged);
     }
     std::vector<uint32_t> final_tokens;
-    for (auto mtok : tokens_merged) {
+    for (auto &mtok : tokens_merged) {
         final_tokens.push_back(m_vocab[mtok]);
     }
     return final_tokens;
@@ -70,6 +70,7 @@ std::string BPE::decode(const std::vector<uint32_t>& tokens, bool valid_utf8) {
     }
     return out;
 }
+
 // https://github.com/karpathy/minGPT/blob/37baab71b9abea1b76ab957409a1cc2fbfba8a26/mingpt/bpe.py#L95
 void BPE::bpe(icu::UnicodeString token_pretoked,
               std::vector<icu::UnicodeString>& output) {
@@ -92,7 +93,7 @@ void BPE::bpe(icu::UnicodeString token_pretoked,
     while (true) {
         size_t min_rank = SIZE_MAX;
         UnicodeBigram to_merge;
-        for (auto bigram : pairs) {
+        for (auto &bigram : pairs) {
             auto loc = m_merges.find(bigram);
             if (loc != m_merges.end() && loc->second < min_rank) {
                 min_rank = loc->second;

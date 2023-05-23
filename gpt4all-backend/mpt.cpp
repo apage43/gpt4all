@@ -912,6 +912,7 @@ void MPT::prompt(const std::string &prompt,
     int r_instructFound = 0;
 
     std::string cachedResponse;
+    std::string decodeBuffer;
     std::vector<int> cachedTokens;
     std::unordered_set<std::string> reversePrompts
         = { "### Instruction", "### Prompt", "### Response", "### Human", "### Assistant" };
@@ -967,7 +968,7 @@ void MPT::prompt(const std::string &prompt,
         if (id == 0 /*end of text*/)
             goto stop_generating;
 
-        const std::string str = d_ptr->vocab.id_to_token[id];
+        const std::string str = m_tokav->decode({(uint32_t) id}, *m_bpe, true, false);
 
         // Check if the provided str is part of our reverse prompts
         bool foundPartialReversePrompt = false;
@@ -997,7 +998,8 @@ void MPT::prompt(const std::string &prompt,
             if (promptCtx.tokens.size() == promptCtx.n_ctx)
                 promptCtx.tokens.erase(promptCtx.tokens.begin());
             promptCtx.tokens.push_back(t);
-            if (!responseCallback(t, d_ptr->vocab.id_to_token[t]))
+            const std::string decoded = m_tokav->decode({(uint32_t) t}, *m_bpe, true, false);
+            if (!responseCallback(t, decoded))
                 goto stop_generating;
         }
         cachedTokens.clear();
