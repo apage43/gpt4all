@@ -6,6 +6,7 @@
 
 #include <regex>
 #include <stdexcept>
+#include <iostream>
 
 namespace bpecpp {
 const std::string BPE_PRETOK_REGEX =
@@ -22,8 +23,8 @@ static void get_bigrams(const std::vector<icu::UnicodeString>& input,
     }
 }
 
-BPE::BPE(std::unordered_map<std::string_view, uint32_t> vocab,
-         std::vector<std::pair<std::string_view, std::string_view>> merges) {
+BPE::BPE(const std::unordered_map<std::string_view, uint32_t>& vocab,
+         const std::vector<std::pair<std::string_view, std::string_view>>& merges) {
     for (auto pair : vocab) {
         icu::UnicodeString encd = icu::UnicodeString::fromUTF8(pair.first);
         m_vocab[encd] = pair.second;
@@ -178,8 +179,7 @@ static std::string regex_escape(const std::string_view inp) {
 }
 
 AdditionalVocabAdapter::AdditionalVocabAdapter(
-    std::vector<additional_vocab_item> vocab) {
-    m_addvocab.swap(vocab);
+    const std::vector<additional_vocab_item>& vocab) {
     std::string addedtoken_regex;
     for (const additional_vocab_item& item : vocab) {
         if (!addedtoken_regex.empty()) {
@@ -199,7 +199,7 @@ std::vector<uint32_t> AdditionalVocabAdapter::encode(
     const std::string& input,
     BPE& bpemodel,
     bool encode_special_tokens) {
-    if (m_addvocab.empty()) {
+    if (m_token_to_id.empty()) {
         return bpemodel.encode(input);
     }
     std::vector<uint32_t> out;

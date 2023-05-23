@@ -56,8 +56,8 @@ struct icu_hash {
 
 class BPE {
    public:
-    BPE(std::unordered_map<std::string_view, uint32_t> vocab,
-        std::vector<std::pair<std::string_view, std::string_view>> merges);
+    BPE(const std::unordered_map<std::string_view, uint32_t> &vocab,
+        const std::vector<std::pair<std::string_view, std::string_view>> &merges);
 
     std::vector<uint32_t> encode(const std::string& input);
 
@@ -102,7 +102,7 @@ struct additional_vocab_item {
 };
 class AdditionalVocabAdapter {
    public:
-    AdditionalVocabAdapter(std::vector<additional_vocab_item> vocab);
+    AdditionalVocabAdapter(const std::vector<additional_vocab_item> &vocab);
     std::vector<uint32_t> encode(const std::string& input,
                                  BPE& bpemodel,
                                  bool encode_special_tokens = true);
@@ -112,7 +112,6 @@ class AdditionalVocabAdapter {
                        bool valid_utf8 = true);
 
    private:
-    std::vector<additional_vocab_item> m_addvocab;
     std::unordered_map<std::string_view, uint32_t> m_token_to_id;
     std::unordered_map<uint32_t, std::string_view> m_id_to_token;
     std::unordered_set<uint32_t> m_special_ids;
