@@ -18,7 +18,7 @@ class BufSlice:
     offset: int
     length: int
     def __repr__(self):
-        return f'T(0x{self.offset:x},{self.length})'
+        return '{'f'0x{self.offset:x},{self.length}''}'
 
 def c_str_dump(bs):
     s = bytearray()
@@ -92,7 +92,6 @@ def do_convert(tkfilename, prefix):
     print('#include "bpe.h"')
     print(f"// buflen {len(buf.buf)}")
     print(f"constexpr const char* {prefix}_buffer =\n{c_str_dump(buf.buf)};")
-    print("#define T(o,l) {o,l}")
     avilen = len(tokconfig['added_tokens'])
     print(f'constexpr std::array<bpecpp::additional_vocab_item_embedded, {avilen}> {prefix}_additional_vocab = ''{{')
     for last, avi in iter_with_last(tokconfig['added_tokens']):
@@ -112,7 +111,6 @@ def do_convert(tkfilename, prefix):
         comma = ',' if not last else '' 
         print(f'  {buf.get(vi)}' + comma, end='')
     print('\n}};')
-    print("#undef T")
 
 def main():
     if len(sys.argv) < 3:
